@@ -22,15 +22,6 @@
 #include "xjjrootuti.h"
 #include "TMVAClassification.h"
 
-#include <iostream>
-#include <string>
-#include <TMVA/Factory.h>
-#include <TMVA/DataLoader.h>
-#include <TMVA/Tools.h>
-#include <TFile.h>
-#include <TTree.h>
-#include <TSystem.h>
-#include <TROOT.h>
 
 void TMVAClassification(std::string signalInputFile, std::string backgroundInputFile, 
                         std::string cuts, std::string cutb, std::string outputDir,
