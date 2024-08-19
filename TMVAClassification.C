@@ -22,76 +22,82 @@
 #include "xjjrootuti.h"
 #include "TMVAClassification.h"
 
-void TMVAClassification() {
+#include <iostream>
+#include <string>
+#include <TMVA/Factory.h>
+#include <TMVA/DataLoader.h>
+#include <TMVA/Tools.h>
+#include <TFile.h>
+#include <TTree.h>
+#include <TSystem.h>
+#include <TROOT.h>
 
-     // Add the include path for xjjcuti.h before including it
-     //gSystem->AddIncludePath("-I/afs/cern.ch/user/n/nnabiila/REDO/CMSSW_13_2_5_patch1/src/mvaHF/include");
-     //#include "xjjcuti.h"
-    
-     // Initialize TMVA
+void TMVAClassification(std::string signalInputFile, std::string backgroundInputFile, 
+                        std::string cuts, std::string cutb, std::string outputDir,
+                        std::string algo, int NTrees) {
+
+    // Initialize TMVA
     TMVA::Tools::Instance();
+    TFile *outputFile = TFile::Open((outputDir + "/TMVA_" + algo + "_NTrees" + std::to_string(NTrees) + ".root").c_str(), "RECREATE");
+    
+    // Initialize the factory
+    TMVA::Factory *factory = new TMVA::Factory("TMVAClassification", outputFile,
+                                                "!V:!Silent:Color:DrawProgressBar:Transformations=I;D;P;G,D:AnalysisType=Classification");
 
-    // Output file
-    TFile* outputFile = TFile::Open("TMVAClassificationOutput.root", "RECREATE");
+    // DataLoader is used to load the datasets
+    TMVA::DataLoader *dataloader = new TMVA::DataLoader("dataset");
 
-    // Create the factory object
-    TMVA::Factory* factory = new TMVA::Factory("TMVAClassification", outputFile, 
-                      "!V:!Silent:Color:DrawProgressBar:Transformations=I:AnalysisType=Classification");
+    // Add variables
+    dataloader->AddVariable("var1", 'F');
+    dataloader->AddVariable("var2", 'F');
+    // Add more variables here...
 
-    // Create the DataLoader object
-    TMVA::DataLoader* dataloader = new TMVA::DataLoader("dataset");
-
-    // Load your data here (replace with your data file paths and trees)
-    TFile* input = TFile::Open("input_data.root");
-    TTree* signalTree = (TTree*)input->Get("SignalTree");
-    TTree* backgroundTree = (TTree*)input->Get("BackgroundTree");
+    // Load signal and background trees
+    TFile *inputS = TFile::Open(signalInputFile.c_str());
+    TFile *inputB = TFile::Open(backgroundInputFile.c_str());
+    TTree *signalTree = (TTree*)inputS->Get("SignalTree");
+    TTree *backgroundTree = (TTree*)inputB->Get("BackgroundTree");
 
     dataloader->AddSignalTree(signalTree, 1.0);
     dataloader->AddBackgroundTree(backgroundTree, 1.0);
 
-    // Define the input variables that you want to use for training
-    dataloader->AddVariable("var1", 'F');
-    dataloader->AddVariable("var2", 'F');
-    // Add more variables as needed
+    // Apply cuts
+    dataloader->PrepareTrainingAndTestTree(cuts.c_str(), cutb.c_str(), "nTrain_Signal=0:nTrain_Background=0:SplitMode=Random:NormMode=NumEvents:!V");
 
-    // Set the weight expression for signal and background
-    dataloader->SetSignalWeightExpression("weight");
-    dataloader->SetBackgroundWeightExpression("weight");
+    // Book the BDT method with varying NTrees
+    factory->BookMethod(dataloader, TMVA::Types::kBDT, "BDT",
+                        Form("!H:!V:NTrees=%d:MinNodeSize=2.5%%:BoostType=AdaBoost:AdaBoostBeta=0.5:SeparationType=GiniIndex:nCuts=20", NTrees));
 
-    // Prepare the training and test tree
-    dataloader->PrepareTrainingAndTestTree("", "", 
-                                           "nTrain_Signal=0:nTrain_Background=0:SplitMode=Random:NormMode=NumEvents:!V");
-
-    // Array of NTrees values for multiple BDTs
-    std::vector<int> ntrees_values = {100, 200, 400, 600, 1000};
-
-    // Loop over the NTrees values and create a BDT for each
-    for (size_t i = 0; i < ntrees_values.size(); i++) {
-        int ntrees = ntrees_values[i];
-
-        TString methodName = TString::Format("BDT_NTrees%d", ntrees);
-        TString methodTitle = TString::Format("BDT with NTrees = %d", ntrees);
-        TString options = TString::Format("!H:!V:NTrees=%d:MinNodeSize=2.5%%:BoostType=AdaBoost:AdaBoostBeta=0.5:MaxDepth=3", ntrees);
-
-        factory->BookMethod(dataloader, TMVA::Types::kBDT, methodName, options);
-    }
-
-    // Train the methods
+    // Train, test, and evaluate
     factory->TrainAllMethods();
-
-    // Test the methods
     factory->TestAllMethods();
-
-    // Evaluate the methods
     factory->EvaluateAllMethods();
 
-    // Save the output
+    // Clean up
     outputFile->Close();
-
-    // Cleanup
     delete factory;
     delete dataloader;
-    delete input;
-
-    std::cout << "==> Finished TMVAClassification" << std::endl;
+    
+    std::cout << "Training with NTrees=" << NTrees << " completed." << std::endl;
 }
+
+int main(int argc, char **argv) {
+    if (argc < 7) {
+        std::cerr << "Usage: " << argv[0] << " <signalInputFile> <backgroundInputFile> <cuts> <cutb> <outputDir> <algo> <NTrees>" << std::endl;
+        return 1;
+    }
+
+    std::string signalInputFile = argv[1];
+    std::string backgroundInputFile = argv[2];
+    std::string cuts = argv[3];
+    std::string cutb = argv[4];
+    std::string outputDir = argv[5];
+    std::string algo = argv[6];
+    int NTrees = atoi(argv[7]);
+
+    // Run TMVA Classification with the provided NTrees value
+    TMVAClassification(signalInputFile, backgroundInputFile, cuts, cutb, outputDir, algo, NTrees);
+
+    return 0;
+}
+
