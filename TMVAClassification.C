@@ -24,11 +24,11 @@
 
 void TMVAClassification(std::string signalInputFile, std::string backgroundInputFile, 
                         std::string cuts, std::string cutb, std::string outputDir,
-                        std::string algo, int NTrees) {
+                        std::string algo, int NTrees, std:string mymethod) {
 
     // Initialize TMVA
     TMVA::Tools::Instance();
-    TFile *outputFile = TFile::Open((outputDir + "/TMVA_" + algo + "_NTrees" + std::to_string(NTrees) + ".root").c_str(), "RECREATE");
+    TFile *outputFile = TFile::Open((outputDir + "/TMVA_" + algo + "_NTrees" + std::to_string(NTrees) + mymethod + ".root").c_str(), "RECREATE");
     
     // Initialize the factory
     TMVA::Factory *factory = new TMVA::Factory("TMVAClassification", outputFile,
