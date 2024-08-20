@@ -1,4 +1,3 @@
-// TMVAClassification.sh - Modified to train multiple BDT models with varing NTrees
 #include <cstdlib>
 #include <iostream>
 #include <map>
