@@ -22,12 +22,29 @@
 #include "TMVAClassification.h"
 
 
-void TMVAClassification(std::string signalInputFile, std::string backgroundInputFile, 
-                        std::string cuts, std::string cutb, std::string outputDir,
-                        std::string algo, int NTrees, std:string mymethod) {
+int TMVAClassification(std::string signalInputFile, std::string backgroundInputFile, 
+                        std::string cuts, std::string cutb, std::string outputDir, float ptmin, float ptmax, std::string algo, int NTrees, std:string mymethod) 
+{
+  std::vector<std::string> methods;
+  std::vector<int> stages;
+  std::string outfname = mytmva::mkname(outputname, ptmin, ptmax, mymethod, stage, methods, stages);
+  std::string outputstr = xjjc::str_replaceallspecial(outfname);
+  if(ptmax < 0) { ptmax = 1.e+10; }
 
     // Initialize TMVA
     TMVA::Tools::Instance();
+
+  // Default MVA methods to be trained + tested
+  std::map<std::string,int> Use;
+
+// Boosted Decision Trees
+  Use["BDT"]             = 0; // uses Adaptive Boost
+  Use["BDTG"]            = 0; // uses Gradient Boost
+  Use["BDTB"]            = 0; // uses Bagging
+  Use["BDTD"]            = 0; // decorrelation + Adaptive Boost
+  Use["BDTF"]            = 0; // allow usage of fisher discriminant for node splitting
+
+
     TFile *outputFile = TFile::Open((outputDir + "/TMVA_" + algo + "_NTrees" + std::to_string(NTrees) + mymethod + ".root").c_str(), "RECREATE");
     
     // Initialize the factory
