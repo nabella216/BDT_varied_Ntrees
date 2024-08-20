@@ -38,12 +38,12 @@ void mytmva::efficiencies(std::string outfname)
   TFile* file = TFile::Open(outfname.c_str());
   if (!file)
   {
-    std::cout << "==> Abort " << FUNCTION << ", please verify filename." << std::endl;
+    std::cout << "==> Abort " << __FUNCTION__ << ", please verify filename." << std::endl;
     return;
   }
   if (file->GetListOfKeys()->GetEntries() <= 0)
   {
-    std::cout << "==> Abort " << FUNCTION << ", please verify if dataset exists." << std::endl;
+    std::cout << "==> Abort " << __FUNCTION__ << ", please verify if dataset exists." << std::endl;
     return;
   }
   // --->>
@@ -54,7 +54,7 @@ void mytmva::efficiencies(std::string outfname)
   // <<---
   else if ((dataset == "" || dataset.IsWhitespace()) && (file->GetListOfKeys()->GetEntries() >= 1))
   {
-    std::cout << "==> Warning " << FUNCTION << ", more than 1 dataset." << std::endl;
+    std::cout << "==> Warning " << __FUNCTION__ << ", more than 1 dataset." << std::endl;
     file->ls();
     return;
   }
