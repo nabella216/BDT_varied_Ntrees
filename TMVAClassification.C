@@ -69,6 +69,19 @@ void TMVAClassification(std::string signalInputFile, std::string backgroundInput
     delete dataloader;
     
     std::cout << "Training with NTrees=" << NTrees << " completed." << std::endl;
+
+    // ------>>
+  if(mymethod != "")
+    {
+      for(std::map<std::string,int>::iterator it = Use.begin(); it != Use.end(); it++) it->second = 0;
+      for(auto& m : methods)
+        {
+          if(Use.find(m) != Use.end())
+            { Use[m] = 1; std::cout <<"==> " << __FUNCTION__ << ": Registered method " << m << std::endl; }
+          else
+            { std::cout << "==> Abort " << __FUNCTION__ << ": error: unknown method " << m << "." << std::endl; continue; }
+        }
+    }
 }
 
 int main(int argc, char **argv) {
